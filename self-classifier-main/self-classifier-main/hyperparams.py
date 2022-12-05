@@ -1,13 +1,15 @@
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
+from typing import List
 
 
 @dataclass_json
 @dataclass
 class PretrainHyperParams:
+    dataset: str
     num_epochs: int
     batch_size: int
-    n_classes: list[int]
+    n_classes: List[int]
     lr_init_value: float = 0.3
     lr_top_value: float = 4.8
     lr_top_epoch: float = 10
@@ -15,15 +17,21 @@ class PretrainHyperParams:
     seed: int = 42
 
     def ckpt_prefix(self):
+        dataset = self.dataset.lower()
         ncls_part = "-".join(map(str, self.n_classes))
         lr_part = f"_la{self.lr_init_value}_lb{self.lr_top_value}_lc{self.lr_top_epoch}_ld{self.lr_final_value}"
-        return f"pre_b{self.batch_size}_n{ncls_part}" + lr_part + "_epoch"
+        return (
+            f"pre_{dataset}_b{self.batch_size}_n{ncls_part}"
+            + lr_part
+            + "_epoch"
+        )
 
 
 @dataclass_json
 @dataclass
 class LinearHyperParams:
     pretrain_params: PretrainHyperParams
+    dataset: str
     num_epochs: int
     n_classes: int
     batch_size: int
@@ -34,9 +42,10 @@ class LinearHyperParams:
     seed: int = 42
 
     def ckpt_prefix(self):
+        dataset = self.dataset.lower()
         pretrain_prefix = self.pretrain_params.ckpt_prefix()
         lr_part = f"_la{self.lr_init_value}_lb{self.lr_top_value}_lc{self.lr_top_epoch}_ld{self.lr_final_value}"
-        return f"lin_{pretrain_prefix}__n{self.n_classes}_b{self.batch_size}_{lr_part}_epoch"
+        return f"lin_{dataset}_{pretrain_prefix}__n{self.n_classes}_b{self.batch_size}_{lr_part}_epoch"
 
 
 def load_pretrain_params():

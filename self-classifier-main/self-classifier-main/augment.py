@@ -9,7 +9,7 @@ class TransformsSimCLR:
     denoted x i and x j, which we consider as a positive pair.
     """
 
-    def __init__(self, is_pretrain=True, is_val=False):
+    def __init__(self, is_pretrain=True, is_val=False, needs_grayscale=True):
         self.is_pretrain = is_pretrain
         self.is_val = is_val
         s = 1
@@ -20,9 +20,10 @@ class TransformsSimCLR:
             [
                 transforms.RandomHorizontalFlip(),  # with 0.5 probability
                 transforms.RandomApply([color_jitter], p=0.8),
-                transforms.RandomGrayscale(p=0.2),
-                transforms.Lambda(np.array),
             ]
+            + [transforms.RandomGrayscale(p=0.2)]
+            if needs_grayscale
+            else [] + [transforms.Lambda(np.array)]
         )
 
         self.test_transform = transforms.Compose(

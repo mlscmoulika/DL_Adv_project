@@ -1,4 +1,5 @@
 import argparse
+from typing import List
 
 from get_dataset import get_dataset
 from train import do_pretraining, do_linear_eval
@@ -9,7 +10,7 @@ from viz1 import handle_viz1
 # config.update('jax_disable_jit', True)
 
 
-def csv_ints(s: str) -> list[int]:
+def csv_ints(s: str) -> List[int]:
     ints = [int(part.strip()) for part in s.split(",")]
     return ints
 
@@ -25,20 +26,16 @@ def parse_args():
 
 
 def handle_pretrain(args) -> int:
-    data_splits = get_dataset("CIFAR10")
     hyperparams = load_pretrain_params()
-    train_state = do_pretraining(
-        data_splits["augmented"], hyperparams=hyperparams
-    )
+    data_splits = get_dataset(hyperparams.dataset)
+    do_pretraining(data_splits["augmented"], hyperparams=hyperparams)
     return 0
 
 
 def handle_lineval(args) -> int:
-    data_splits = get_dataset("CIFAR10")
     hyperparams = load_lineval_params()
-
+    data_splits = get_dataset(hyperparams.dataset)
     do_linear_eval(data_splits["nonaugmented"], hyperparams=hyperparams)
-
     return 0
 
 

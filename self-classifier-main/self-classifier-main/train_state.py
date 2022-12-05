@@ -11,6 +11,7 @@ from jax.random import PRNGKey
 from hyperparams import PretrainHyperParams, LinearHyperParams
 from make_model import make_pretrain_net, make_linear_net
 from cosine_scheduler import cosine_decay_schedule
+from get_dataset import dataset_shape
 
 
 class TrainState(train_state.TrainState):
@@ -22,8 +23,7 @@ def get_pretrain_state(
     hp: PretrainHyperParams, steps_per_epoch: int, *, minimum_epoch: int = 0
 ) -> Optional[TrainState]:
     heads, heads_state = make_pretrain_net(
-        PRNGKey(hp.seed),
-        hp.n_classes,
+        PRNGKey(hp.seed), hp.n_classes, dataset_shape(hp.dataset)
     )
     tx = optax.lars(
         cosine_decay_schedule(
@@ -74,7 +74,10 @@ def get_lineval_state(
     assert pretrain_state is not None, "you must pretrain first"
 
     linear_head, linear_state = make_linear_net(
-        PRNGKey(lp.seed), pretrain_state, lp.n_classes
+        PRNGKey(lp.seed),
+        pretrain_state,
+        lp.n_classes,
+        dataset_shape(lp.dataset),
     )
     tx = optax.multi_transform(
         {

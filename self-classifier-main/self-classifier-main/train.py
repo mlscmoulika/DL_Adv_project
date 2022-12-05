@@ -1,8 +1,11 @@
+from torch.utils.tensorboard import SummaryWriter
+from flax.training import checkpoints
+
 from train_state import get_pretrain_state, get_lineval_state, TrainState
 from data_loader import NumpyLoader
 from epoch import pretrain_epoch, lineval_epoch
 from hyperparams import LinearHyperParams, PretrainHyperParams
-from flax.training import checkpoints
+
 import time
 from datetime import timedelta
 
@@ -23,8 +26,13 @@ def do_pretraining(
     epoch = int(pretrain_state.epoch)
     print("Initial epoch", epoch, type(epoch))
 
+    # Tensorboard stuff
+    tb_writer = SummaryWriter("tensorboard_logs/", filename_suffix="pretrain")
+
     while epoch < hyperparams.num_epochs:
         start_time = time.perf_counter()
+
+        # Do epoch and save
         pretrain_state, pretrain_loss = pretrain_epoch(
             pretrain_state, dataloader
         )
@@ -35,9 +43,15 @@ def do_pretraining(
             step=epoch,
             prefix=hyperparams.ckpt_prefix(),
         )
+
+        # Tensorboard
+        tb_writer.add_scalar("Loss/train", pretrain_loss, epoch)
+
+        # Timing
         time_elapsed = time.perf_counter() - start_time
         epochs_remaining = hyperparams.num_epochs - epoch
         time_remaining = timedelta(seconds=int(epochs_remaining * time_elapsed))
+
         print(
             f"Epoch {pretrain_state.epoch}: pretrain loss {pretrain_loss:.3f} ({time_elapsed:.1f} sec, {time_remaining} remaining)"
         )

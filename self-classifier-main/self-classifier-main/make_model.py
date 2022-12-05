@@ -4,6 +4,7 @@ from flax.linen.normalization import BatchNorm
 from jax import random
 import numpy as np
 from flax.core.frozen_dict import freeze, unfreeze, FrozenDict
+from typing import List, Tuple
 
 
 class MLP(nn.Module):
@@ -20,7 +21,7 @@ class MLP(nn.Module):
 
 class Heads(nn.Module):
     mlp: MLP
-    n_classes: list[int]
+    n_classes: List[int]
 
     @nn.compact
     def __call__(self, x, train: bool):
@@ -59,9 +60,9 @@ def get_backbone():
 
 
 def make_pretrain_net(
-    key: random.KeyArray, n_classes: list[int]
-) -> tuple[Heads, FrozenDict]:
-    dummy_input = np.zeros((8, 32, 32, 3))
+    key: random.KeyArray, n_classes: List[int], image_size: Tuple[int, int, int]
+) -> Tuple[Heads, FrozenDict]:
+    dummy_input = np.zeros((1,) + image_size)
 
     backbone = get_backbone()
     key, param_key1 = random.split(key)
@@ -82,9 +83,12 @@ def make_pretrain_net(
 
 
 def make_linear_net(
-    key: random.KeyArray, pretrain_state, n_classes: int
-) -> tuple[LinearHead, FrozenDict]:
-    dummy_input = np.zeros((8, 32, 32, 3))
+    key: random.KeyArray,
+    pretrain_state,
+    n_classes: int,
+    image_size: Tuple[int, int, int],
+) -> Tuple[LinearHead, FrozenDict]:
+    dummy_input = np.zeros((1,) + image_size)
 
     backbone = get_backbone()
     key, param_key1 = random.split(key)
